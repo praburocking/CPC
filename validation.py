@@ -16,7 +16,7 @@ def validation(args, model, device, data_loader, batch_size):
     with torch.no_grad():
         for data in data_loader:
             data = data.float().unsqueeze(1).to(device) # add channel dimension
-            hidden = model.init_hidden(len(data), use_gpu=True)
+            hidden = model.init_hidden(len(data), use_gpu=args["use_gpu"])
             acc, loss, hidden = model(data, hidden)
             total_loss += len(data) * loss 
             total_acc  += len(data) * acc

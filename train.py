@@ -10,7 +10,7 @@ def train(args, model, device, train_loader, optimizer, epoch, batch_size):
     for batch_idx, data in enumerate(train_loader):
         data = data.float().unsqueeze(1).to(device) # add channel dimension
         optimizer.zero_grad()
-        hidden = model.init_hidden(len(data), use_gpu=True)
+        hidden = model.init_hidden(len(data), use_gpu=args["use_gpu"])
         acc, loss, hidden = model(data, hidden)
 
         loss.backward()

@@ -41,3 +41,30 @@ class RawDataset(data.Dataset):
         #label   = self.spk2idx[speaker]
 
         return self.h5f[utt_id][index:index+self.audio_window]
+
+def get_dataloaders(conf):
+    if conf.training_mode=="down_stream":
+        training_set   = RawDataset(conf.dev_outputfile_name, conf.dev_outputlist_name, conf.audio_window)
+        no_training_data=int(len(training_set)*conf.train_split)
+        no_val_data=int(len(training_set)-no_training_data)
+
+        test_set   = RawDataset(conf.test_outputfile_name, conf.test_outputlist_name, conf.audio_window)
+        training_set, validation_set = torch.utils.data.random_split(training_set, [no_training_data, no_val_data])
+
+        train_loader = data.DataLoader(training_set, batch_size=conf.batch_size, shuffle=True)
+        validation_loader = data.DataLoader(validation_set, batch_size=conf.batch_size, shuffle=False)
+        test_loader = data.DataLoader(test_set, batch_size=conf.batch_size, shuffle=False)
+
+        return train_loader,validation_loader,test_loader
+    elif conf.training_mode=="up_stream":
+        finnish_speech_training_set   = RawDataset(conf.finnish_speech_outputfile_name, conf.finnish_speech_outputlist_name, conf.audio_window)
+        no_training_data=int(len(finnish_speech_training_set)*conf.train_split)
+        no_val_data=int(len(finnish_speech_training_set)-no_training_data)
+        finnish_speech_training_set, finnish_speech_validation_set = torch.utils.data.random_split(finnish_speech_training_set, [no_training_data, no_val_data])
+        finnish_train_loader = data.DataLoader(finnish_speech_training_set, batch_size=conf.batch_size, shuffle=True)
+        finnish_validation_loader = data.DataLoader(finnish_speech_validation_set, batch_size=conf.batch_size, shuffle=False)
+        return finnish_train_loader,finnish_validation_loader,None
+    
+    
+
+
