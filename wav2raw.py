@@ -17,6 +17,8 @@ def audio2raw(rootdirs,extension,outputfile_name,outputlist_name):
                     fullpath = os.path.join(subdir, file)
                     data,fs = sf.read(fullpath)
                     data=np.array(data)
+                    if len(data.shape)==2:
+                        data=np.array(data[:,0])
                     h5f.create_dataset(file[:-len(extension)], data=data)
                     file_names.append(file[:-len(extension)])
                     print(file[:-len(extension)])
@@ -28,12 +30,12 @@ dev_outputfile_name='dev-Librispeech.h5'
 dev_outputlist_name='dev-Librispeech.pkl'
 dev_rootdirs=['../data/LibriSpeech/dev-clean/','../data/LibriSpeech/dev-other/']
 extension=".flac"
-audio2raw(dev_rootdirs,extension,dev_outputfile_name,dev_outputlist_name)
+#audio2raw(dev_rootdirs,extension,dev_outputfile_name,dev_outputlist_name)
 
 test_outputfile_name='test-Librispeech.h5'
 test_outputlist_name='test-Librispeech.pkl'
 test_rootdirs=['../data/LibriSpeech/test-clean/','../data/LibriSpeech/test-other/']
-audio2raw(test_rootdirs,extension,test_outputfile_name,test_outputlist_name)
+#audio2raw(test_rootdirs,extension,test_outputfile_name,test_outputlist_name)
 
 
 finnish_speech_outputfile_name='finnish_speech.h5'
