@@ -30,12 +30,12 @@ dev_outputfile_name='dev-Librispeech.h5'
 dev_outputlist_name='dev-Librispeech.pkl'
 dev_rootdirs=['../data/LibriSpeech/dev-clean/','../data/LibriSpeech/dev-other/']
 extension=".flac"
-#audio2raw(dev_rootdirs,extension,dev_outputfile_name,dev_outputlist_name)
+audio2raw(dev_rootdirs,extension,dev_outputfile_name,dev_outputlist_name)
 
 test_outputfile_name='test-Librispeech.h5'
 test_outputlist_name='test-Librispeech.pkl'
 test_rootdirs=['../data/LibriSpeech/test-clean/','../data/LibriSpeech/test-other/']
-#audio2raw(test_rootdirs,extension,test_outputfile_name,test_outputlist_name)
+audio2raw(test_rootdirs,extension,test_outputfile_name,test_outputlist_name)
 
 
 finnish_speech_outputfile_name='finnish_speech.h5'

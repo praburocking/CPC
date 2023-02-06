@@ -8,14 +8,15 @@ logger = logging.getLogger("cdc")
 def train(args, model, device, train_loader, optimizer, epoch, batch_size):
     model.train()
     for batch_idx, data in enumerate(train_loader):
-        data = data.float().unsqueeze(1).to(device) # add channel dimension
+        data = data.float().to(device) # add channel dimension
         optimizer.zero_grad()
-        hidden = model.init_hidden(len(data), use_gpu=args["use_gpu"])
-        acc, loss, hidden = model(data, hidden)
-
+#        hidden = model.init_hidden(len(data), use_gpu=args["use_gpu"])
+        loss = model(data)
+        acc=0
         loss.backward()
         optimizer.step()
-        lr = optimizer.update_learning_rate()
+       # lr = optimizer.update_learning_rate()
+        lr=args["lr"]
         if batch_idx % args["log_interval"] == 0:
             logger.info('Train Epoch: {} [{}/{} ({:.0f}%)]\tlr:{:.5f}\tAccuracy: {:.4f}\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
@@ -25,7 +26,7 @@ def train_down_stream(args,us_model, ds_model, device, train_loader, optimizer, 
     ds_model.train()
     us_model.eval()
     for batch_idx, (data,y) in enumerate(train_loader):
-        data = data.float().unsqueeze(1).to(device) # add channel dimension
+        data = data.float().to(device) # add channel dimension
         optimizer.zero_grad()
         hidden = us_model.init_hidden(len(data), use_gpu=args["use_gpu"])
         #up stream task gets the representation

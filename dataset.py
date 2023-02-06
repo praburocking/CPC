@@ -88,6 +88,20 @@ def get_dataloaders(conf):
 
         test_set   = RawDataset(conf.test_outputfile_name, conf.test_outputlist_name, conf.audio_window)
         training_set, validation_set = torch.utils.data.random_split(training_set, [no_training_data, no_val_data])
+        print("training and validation split")
+        print(len(training_set))
+        print(len(validation_set))
+
+        ##temp block should be removed
+        no_training_data=int(len(training_set)*conf.train_split)
+        no_val_data=int(len(training_set)-no_training_data)
+        training_set, validation_set = torch.utils.data.random_split(training_set, [no_training_data, no_val_data])
+        no_training_data=int(len(training_set)*conf.train_split)
+        no_val_data=int(len(training_set)-no_training_data)
+        training_set, validation_set = torch.utils.data.random_split(training_set, [no_training_data, no_val_data])
+     
+        print(len(training_set))
+        print(len(validation_set))
 
         train_loader = data.DataLoader(training_set, batch_size=conf.batch_size, shuffle=True)
         validation_loader = data.DataLoader(validation_set, batch_size=conf.batch_size, shuffle=False)

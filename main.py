@@ -14,6 +14,7 @@ import torch.optim as optim
 #local imports
 from dataset import get_dataloaders
 from model.cdc_model import CDCK2
+from model.cpc_model1 import CPC
 from model.classification_model import EmotionClassifier
 from scheduledoptimizer import ScheduledOptim
 from logger import setup_logs
@@ -46,7 +47,8 @@ for i in temp_conf_attributes:
 print("-----------end of configurations----------")
 
 device = torch.device("cuda" if use_cuda else "cpu")
-us_model = CDCK2(timestep, batch_size, audio_window).to(device)
+#us_model = CDCK2(timestep, batch_size, audio_window).to(device)
+us_model=CPC()
 ds_model=None
 if conf.training_mode=="down_stream":
     ds_model=EmotionClassifier(linear_config=conf.emotion_classifier_linear_config,no_classes=conf.emotion_classifier_no_class)
@@ -54,17 +56,19 @@ if conf.training_mode=="down_stream":
     us_model.load_state_dict(checkpoint['state_dict'])
     logger.info("parameters loaded for the model "+str(us_model.__class__.__name__)+" from the file "+conf.model_path)
 
-optimizer = ScheduledOptim(
-        optim.Adam(
-            filter(lambda p: p.requires_grad, us_model.parameters()), 
-            betas=(0.9, 0.98), eps=1e-09, weight_decay=1e-4, amsgrad=True),
-        warmup_steps)
+#optimizer = ScheduledOptim(
+ #       optim.Adam(
+ #           filter(lambda p: p.requires_grad, us_model.parameters()), 
+ #           betas=(0.9, 0.98), eps=1e-09, weight_decay=1e-4, amsgrad=True),
+ #       warmup_steps)
+lr = 1e-4
+optimizer = torch.optim.Adam(us_model.parameters(), lr=lr)
 
 model_params = sum(p.numel() for p in us_model.parameters() if p.requires_grad)
 logger.info('### Model summary below###\n {}\n'.format(str(us_model)))
 logger.info('===> Model total parameter: {}\n'.format(model_params))
 
-args={"log_interval":100,"logging_dir":logging_dir,"epochs":epochs,"use_gpu":use_cuda,"device":device}
+args={"log_interval":100,"logging_dir":logging_dir,"epochs":epochs,"use_gpu":use_cuda,"device":device,"lr":lr}
 
 
 train_loader,validation_loader,test_loader=get_dataloaders(conf)
@@ -105,13 +109,19 @@ def process_training(us_model,ds_model,epochs,args,train_loader,optimizer,batch_
             
             best_epoch = epoch + 1
         elif epoch - best_epoch > 2:
-            optimizer.increase_delta()
+           # optimizer.increase_delta()
             best_epoch = epoch + 1
         
     end_epoch_timer = timer()
     logger.info("#### End epoch {}/{}, elapsed time: {}".format(epoch, args["epochs"], end_epoch_timer - epoch_timer))
 
 
+#for i in train_loader:
+
+ #   print(i.shape)
+ #   print(len(i))
+ #   print(type(i))
+ #   break
 process_training(us_model,ds_model,epochs,args,train_loader,optimizer,batch_size)
 ## end 
 end_global_timer = timer()
