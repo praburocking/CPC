@@ -11,7 +11,8 @@ class EmotionClassifier(nn.Module):
         self.linear_end=nn.Linear(linear_config[-1]["out_dim"],no_classes)
         self.activation=nn.Softmax()
     def forward(self,x):
-        out=self.linear_modules(x)
-        out=self.linear_end(out)
-        out=self.activation(out)
-        return out
+        for linear_module in self.linear_modules:
+            x=linear_module(x)
+        x=self.linear_end(x)
+        #x=self.activation(x)
+        return x

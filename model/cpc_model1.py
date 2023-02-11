@@ -149,6 +149,6 @@ class CPC(nn.Module):
         print("loss ...."+str(total_loss))
             # calculate the INFO-NCE by comparing the z and x 
 
-        return loss
+        return loss,z
 
 

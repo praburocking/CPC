@@ -1,4 +1,5 @@
 import time
+import torch.nn as nn
 audio_window=2048
 use_cuda=False
 timestep=12
@@ -16,8 +17,8 @@ run_name_ds_model = "class_" + time.strftime("-%Y-%m-%d_%H_%M_%S")
 up_stream --> intermediate task to learn the representation
 down_stream --> actual task to be performed like classification, speaker detection.
 '''
-#training_mode="down_stream"
-training_mode="up_stream"
+training_mode="down_stream"
+#training_mode="up_stream"
 dev_outputfile_name='dev-Librispeech.h5'
 dev_outputlist_name='dev-Librispeech.pkl'
 test_outputfile_name='test-Librispeech.h5'
@@ -27,4 +28,5 @@ finnish_speech_outputlist_name='finnish_speech.pkl'
 emotion_classifier_linear_config=[{"in_dim":512,"out_dim":256},{"in_dim":256,"out_dim":124},{"in_dim":124,"out_dim":64}]
 emotion_classifier_no_class=5
 load_model=True
-model_path='.\logs\cdc-2023-01-12_20_57_01-model_best.pth'
+model_path='.\logs\CPC-model_best.pth'
+down_stream_loss_fn = nn.CrossEntropyLoss()

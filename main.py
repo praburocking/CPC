@@ -68,7 +68,7 @@ model_params = sum(p.numel() for p in us_model.parameters() if p.requires_grad)
 logger.info('### Model summary below###\n {}\n'.format(str(us_model)))
 logger.info('===> Model total parameter: {}\n'.format(model_params))
 
-args={"log_interval":100,"logging_dir":logging_dir,"epochs":epochs,"use_gpu":use_cuda,"device":device,"lr":lr}
+args={"log_interval":100,"logging_dir":logging_dir,"epochs":epochs,"use_gpu":use_cuda,"device":device,"lr":lr,"down_stream_loss_fn":conf.down_stream_loss_fn}
 
 
 train_loader,validation_loader,test_loader=get_dataloaders(conf)
@@ -81,16 +81,18 @@ def process_training(us_model,ds_model,epochs,args,train_loader,optimizer,batch_
     for epoch in range(1, epochs + 1):
         epoch_timer = timer()
         if conf.training_mode=="up_stream":
-            train(args, us_model, args["device"], train_loader, optimizer, epoch, batch_size)
+            train(args, us_model, train_loader, optimizer, epoch, batch_size)
             val_acc, val_loss = validation(args, us_model, device, validation_loader, batch_size)
         elif conf.training_mode=="down_stream":
-            train_down_stream(args, us_model, ds_model,args["device"], train_loader, optimizer, epoch, batch_size)
-            val_acc, val_loss = validation_down_stream(args, us_model, ds_model,device, validation_loader, batch_size)
+            for name,param in us_model.named_parameters():
+                param.requires_grads=False
+            train_down_stream(args, us_model, ds_model, train_loader, optimizer, epoch, batch_size)
+            val_acc,val_loss = validation_down_stream(args, us_model, ds_model, validation_loader, batch_size)
         
         # Save
-        if val_acc > best_acc: 
+        if val_loss < best_loss: 
             if us_model is not None:
-                best_acc = max(val_acc, best_acc)
+                best_loss = min(val_acc, best_acc)
                 snapshot(args["logging_dir"], us_model.__class__.__name__, { 
                     'epoch': epoch + 1,
                     'validation_acc': val_acc, 

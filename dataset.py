@@ -77,7 +77,10 @@ class RawDownStreamDataset(data.Dataset):
         index = np.random.randint(utt_len - self.audio_window + 1) # get the index to read part of the utterance into memory 
         #speaker = utt_id.split('-')[0]
         #label   = self.spk2idx[speaker]
-
+        str_int=lambda x:int(x)-1
+        apply_fun=np.vectorize(str_int)
+        y=apply_fun(y)
+       
         return self.h5f[utt_id][index:index+self.audio_window],y
 
 def get_dataloaders(conf):
