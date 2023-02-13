@@ -46,23 +46,20 @@ for i in temp_conf_attributes:
         print(i+"------"+str(getattr(conf,i)))
 print("-----------end of configurations----------")
 
+#initalizing the up stream and down stream model 
 device = torch.device("cuda" if use_cuda else "cpu")
-#us_model = CDCK2(timestep, batch_size, audio_window).to(device)
 us_model=CPC()
 ds_model=None
+lr = 1e-4
+optimizer = torch.optim.Adam(us_model.parameters(), lr=lr)
+
+# changes with the training mode in down stream
 if conf.training_mode=="down_stream":
     ds_model=EmotionClassifier(linear_config=conf.emotion_classifier_linear_config,no_classes=conf.emotion_classifier_no_class)
+    optimizer=torch.optim.Adam(ds_model.parameters(), lr=lr)
     checkpoint = torch.load(conf.model_path, map_location=lambda storage, loc: storage) # load everything onto CPU
     us_model.load_state_dict(checkpoint['state_dict'])
     logger.info("parameters loaded for the model "+str(us_model.__class__.__name__)+" from the file "+conf.model_path)
-
-#optimizer = ScheduledOptim(
- #       optim.Adam(
- #           filter(lambda p: p.requires_grad, us_model.parameters()), 
- #           betas=(0.9, 0.98), eps=1e-09, weight_decay=1e-4, amsgrad=True),
- #       warmup_steps)
-lr = 1e-4
-optimizer = torch.optim.Adam(us_model.parameters(), lr=lr)
 
 model_params = sum(p.numel() for p in us_model.parameters() if p.requires_grad)
 logger.info('### Model summary below###\n {}\n'.format(str(us_model)))
@@ -71,6 +68,7 @@ logger.info('===> Model total parameter: {}\n'.format(model_params))
 args={"log_interval":100,"logging_dir":logging_dir,"epochs":epochs,"use_gpu":use_cuda,"device":device,"lr":lr,"down_stream_loss_fn":conf.down_stream_loss_fn}
 
 
+#get the dataloaders
 train_loader,validation_loader,test_loader=get_dataloaders(conf)
 global_timer = timer()
 
@@ -84,10 +82,18 @@ def process_training(us_model,ds_model,epochs,args,train_loader,optimizer,batch_
             train(args, us_model, train_loader, optimizer, epoch, batch_size)
             val_acc, val_loss = validation(args, us_model, device, validation_loader, batch_size)
         elif conf.training_mode=="down_stream":
+            param1=list(us_model.parameters())
             for name,param in us_model.named_parameters():
                 param.requires_grads=False
             train_down_stream(args, us_model, ds_model, train_loader, optimizer, epoch, batch_size)
             val_acc,val_loss = validation_down_stream(args, us_model, ds_model, validation_loader, batch_size)
+
+            #code to test whether the frozen us_model parameters are changed or not. 
+            param2=list(us_model.parameters())
+            for i in range(len(param1)):
+                temp=torch.eq(param1[i],param2[i])
+                eq_val=torch.all(temp)
+                print("does the param "+str(i)+" changed ::"+str(eq_val))
         
         # Save
         if val_loss < best_loss: 
@@ -117,13 +123,6 @@ def process_training(us_model,ds_model,epochs,args,train_loader,optimizer,batch_
     end_epoch_timer = timer()
     logger.info("#### End epoch {}/{}, elapsed time: {}".format(epoch, args["epochs"], end_epoch_timer - epoch_timer))
 
-
-#for i in train_loader:
-
- #   print(i.shape)
- #   print(len(i))
- #   print(type(i))
- #   break
 process_training(us_model,ds_model,epochs,args,train_loader,optimizer,batch_size)
 ## end 
 end_global_timer = timer()

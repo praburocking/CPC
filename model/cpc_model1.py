@@ -126,16 +126,8 @@ class CPC(nn.Module):
         z=torch.clone(x)
         x=self.ar(x) #==>[Batch,length,Channel/feature]
         print("after ar done "+str(x.shape))
-        #i=0
-        #cur_x=x[:,i:(i+self.no_of_projects),:]
-        #cur_z=z.transpose(1,2)
-        #cur_z=cur_z[:,i:(i+self.no_of_projects),:]
-        #x=self.projection(cur_x) #==>[Batch,length,feature/channel]
-        #print("size of cur_x "+str(cur_x.shape)+" :: size of cur_z "+str(cur_z.shape)+" :: size of x "+str(x.shape))
-        #loss=self.infoNCELoss(cur_z.transpose(0,1),x.transpose(0,1))
-        #print("loss ...."+str(loss))
         output=[]
-        z=z.transpose(1,2)
+        z=z.transpose(1,2)#===>[Batch,Channel/feature,length]
         total_loss=0
         for i in range(0,x.shape[1]-self.no_of_projects,self.no_of_projects):
             cur_x=x[:,i:(i+self.no_of_projects),:]

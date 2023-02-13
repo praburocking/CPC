@@ -41,7 +41,7 @@ def train_down_stream(args,us_model, ds_model, train_loader, optimizer, epoch, b
         print("down stream task started")
         predicted_y=ds_model(embeddings)
         print(type(y))
-        print(y)
+        #print(y)
         print(predicted_y.shape)
         print(y.shape)
         predicted_y=predicted_y.transpose(1,2)
@@ -51,8 +51,8 @@ def train_down_stream(args,us_model, ds_model, train_loader, optimizer, epoch, b
         for i in range(batch_size):
             updated_y[i,:]=updated_y[i,:].fill_(y[i])
         loss=args["down_stream_loss_fn"](predicted_y,updated_y)
-        print(y)
-        print(predicted_y)
+        #print(y)
+        #print(predicted_y)
 
         loss.backward()
         optimizer.step()
