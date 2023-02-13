@@ -43,16 +43,9 @@ def train_down_stream(args,us_model, ds_model, train_loader, optimizer, epoch, b
         print(type(y))
         #print(y)
         print(predicted_y.shape)
-        print(y.shape)
-        predicted_y=predicted_y.transpose(1,2)
-        length=predicted_y.shape[-1]
-        batch_size=predicted_y.shape[0]
-        updated_y=torch.empty(batch_size,length,dtype=torch.long)
-        for i in range(batch_size):
-            updated_y[i,:]=updated_y[i,:].fill_(y[i])
-        loss=args["down_stream_loss_fn"](predicted_y,updated_y)
-        #print(y)
-        #print(predicted_y)
+        print("y shape for comparing " +str(y.shape))
+        
+        loss=args["down_stream_loss_fn"](predicted_y,y)
 
         loss.backward()
         optimizer.step()

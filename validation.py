@@ -43,16 +43,11 @@ def validation_down_stream(args, us_model,ds_model, data_loader, batch_size):
     with torch.no_grad():
         for idx,(data,y) in enumerate(data_loader):
             data = data.float().to(device) # add channel dimension
-           # hidden = model.init_hidden(len(data), use_gpu=args["use_gpu"])
+            y=y.to(dtype=torch.long) 
+            
             loss,embeddings= us_model(data)
             predicted_y=ds_model(embeddings)
-            predicted_y=predicted_y.transpose(1,2)
-            length=predicted_y.shape[-1]
-            batch_size=predicted_y.shape[0]
-            updated_y=torch.empty(batch_size,length,dtype=torch.long)
-            for i in range(batch_size):
-                updated_y[i,:]=updated_y[i,:].fill_(y[i])
-            loss=args["down_stream_loss_fn"](predicted_y,updated_y)
+            loss=args["down_stream_loss_fn"](predicted_y,y)
             total_loss += len(data) * loss 
 
     total_loss /= len(data_loader.dataset) # average loss
