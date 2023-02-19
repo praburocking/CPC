@@ -94,12 +94,12 @@ def get_dataloaders(conf):
         print(len(validation_set))
 
         ##temp block should be removed
-        no_training_data=int(len(training_set)*conf.train_split)
-        no_val_data=int(len(training_set)-no_training_data)
-        training_set, validation_set = torch.utils.data.random_split(training_set, [no_training_data, no_val_data])
-        no_training_data=int(len(training_set)*conf.train_split)
-        no_val_data=int(len(training_set)-no_training_data)
-        training_set, validation_set = torch.utils.data.random_split(training_set, [no_training_data, no_val_data])
+      #  no_training_data=int(len(training_set)*conf.train_split)
+      #  no_val_data=int(len(training_set)-no_training_data)
+      #  training_set, validation_set = torch.utils.data.random_split(training_set, [no_training_data, no_val_data])
+   #     no_training_data=int(len(training_set)*conf.train_split)
+   #     no_val_data=int(len(training_set)-no_training_data)
+   #     training_set, validation_set = torch.utils.data.random_split(training_set, [no_training_data, no_val_data])
      
         print(len(training_set))
         print(len(validation_set))

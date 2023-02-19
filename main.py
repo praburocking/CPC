@@ -9,6 +9,7 @@ import torch.nn as nn
 from torch.utils import data
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.utils.tensorboard import SummaryWriter
 
 
 #local imports
@@ -37,7 +38,8 @@ logging_dir=conf.logging_dir
 epochs=conf.epochs
 train_split=conf.train_split
 run_name = conf.run_name_us_model
-logger = setup_logs(logging_dir, run_name) 
+logger = setup_logs(logging_dir, run_name)
+writer = SummaryWriter('runs/cpc') 
 
 print("The run has started with the following configurations")
 temp_conf_attributes=dir(conf)
@@ -80,7 +82,7 @@ def process_training(us_model,ds_model,epochs,args,train_loader,optimizer,batch_
         epoch_timer = timer()
         if conf.training_mode=="up_stream":
             train(args, us_model, train_loader, optimizer, epoch, batch_size)
-            val_acc, val_loss = validation(args, us_model, device, validation_loader, batch_size)
+            val_acc, val_loss = validation(args, us_model,validation_loader, batch_size)
         elif conf.training_mode=="down_stream":
             param1=list(us_model.parameters())
             for name,param in us_model.named_parameters():
@@ -94,7 +96,9 @@ def process_training(us_model,ds_model,epochs,args,train_loader,optimizer,batch_
                 temp=torch.eq(param1[i],param2[i])
                 eq_val=torch.all(temp)
                 print("does the param "+str(i)+" changed ::"+str(eq_val))
-        
+
+        writer.add_scalar("epoch_Loss/train", best_loss, epoch)
+        writer.flush()
         # Save
         if val_loss < best_loss: 
             if us_model is not None:

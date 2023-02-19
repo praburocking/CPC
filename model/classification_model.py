@@ -14,11 +14,11 @@ class EmotionClassifier(nn.Module):
     def forward(self,x):
         for linear_module in self.linear_modules:
             x=linear_module(x)
-        print("size of x before gru"+str(x.shape))
+       # print("size of x before gru"+str(x.shape))
         x,_=self.gru(x)
         x=x[:,-1,:]
-        print("size of x after gru"+str(x.shape))
+       # print("size of x after gru"+str(x.shape))
         x=self.linear_end(x)
-        print("size of x after linear"+str(x.shape))
+       # print("size of x after linear"+str(x.shape))
         #x=self.activation(x)
         return x

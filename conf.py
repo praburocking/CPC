@@ -3,12 +3,12 @@ import torch.nn as nn
 audio_window=2048
 use_cuda=False
 timestep=12
-batch_size=16
+batch_size=64
 audio_window=20480
 warmup_steps=20
 logging_dir='./logs'
-epochs=1
-train_split=0.2
+epochs=3
+train_split=0.8
 run_name = "cdc_" + time.strftime("-%Y-%m-%d_%H_%M_%S")
 run_name_us_model = "cdc_" + time.strftime("-%Y-%m-%d_%H_%M_%S")
 run_name_ds_model = "class_" + time.strftime("-%Y-%m-%d_%H_%M_%S")
@@ -17,8 +17,8 @@ run_name_ds_model = "class_" + time.strftime("-%Y-%m-%d_%H_%M_%S")
 up_stream --> intermediate task to learn the representation
 down_stream --> actual task to be performed like classification, speaker detection.
 '''
-training_mode="down_stream"
-#training_mode="up_stream"
+#training_mode="down_stream"
+training_mode="up_stream"
 dev_outputfile_name='dev-Librispeech.h5'
 dev_outputlist_name='dev-Librispeech.pkl'
 test_outputfile_name='test-Librispeech.h5'

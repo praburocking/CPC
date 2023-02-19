@@ -27,7 +27,7 @@ class Encoder(nn.Module):
         )
     
     def forward(self,x): #X==>[Batch,length]
-        print("xshape in encoder "+str(x.shape))
+        #print("xshape in encoder "+str(x.shape))
         x=x.unsqueeze(1) #==>[Batch,channel,length] where channel is 1
         x=self.encoder(x)
         return x   #==> [Batch,channel,length] where channel is 512
@@ -122,10 +122,10 @@ class CPC(nn.Module):
     
     def forward(self,x): #==> [Batch,length]
         x=self.encoder(x) #==>[Batch,Channel/feature,length]
-        print("after encoder done "+str(x.shape))
+        #print("after encoder done "+str(x.shape))
         z=torch.clone(x)
         x=self.ar(x) #==>[Batch,length,Channel/feature]
-        print("after ar done "+str(x.shape))
+        #print("after ar done "+str(x.shape))
         output=[]
         z=z.transpose(1,2)#===>[Batch,Channel/feature,length]
         total_loss=0
@@ -137,7 +137,7 @@ class CPC(nn.Module):
             loss=self.infoNCELoss(cur_z.transpose(0,1),cur_x.transpose(0,1))
             total_loss=total_loss+loss
         
-            print("size of cur_x "+str(cur_x.shape)+" :: size of cur_z "+str(cur_z.shape))
+         #   print("size of cur_x "+str(cur_x.shape)+" :: size of cur_z "+str(cur_z.shape))
         print("loss ...."+str(total_loss))
             # calculate the INFO-NCE by comparing the z and x 
 
