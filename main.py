@@ -103,7 +103,7 @@ def process_training(us_model,ds_model,epochs,args,train_loader,optimizer,batch_
         if val_loss < best_loss: 
             if us_model is not None:
                 best_loss = min(val_acc, best_acc)
-                snapshot(args["logging_dir"], us_model.__class__.__name__, { 
+                snapshot(args["logging_dir"], us_model.__class__.__name__+str(val_loss)+"__"+time.strftime("-%Y-%m-%d_%H_%M_%S"), { 
                     'epoch': epoch + 1,
                     'validation_acc': val_acc, 
                     'state_dict': us_model.state_dict(),
@@ -111,7 +111,7 @@ def process_training(us_model,ds_model,epochs,args,train_loader,optimizer,batch_
                     'optimizer': optimizer.state_dict(),
                 })
             if ds_model is not None:
-                snapshot(args["logging_dir"], ds_model.__class__.__name__, { 
+                snapshot(args["logging_dir"], ds_model.__class__.__name__+str(val_loss)+"__"+time.strftime("-%Y-%m-%d_%H_%M_%S"), { 
                     'epoch': epoch + 1,
                     'validation_acc': val_acc, 
                     'state_dict': us_model.state_dict(),

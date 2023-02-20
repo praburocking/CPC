@@ -48,7 +48,7 @@ class Projection(nn.Module):
     def forward(self,x): #==>[batch,length,feature/channel]
         predicted_future_Z=[]
         for i,cur_ws in enumerate(self.ws):
-            predicted_future_Z.append(cur_ws(x[:,i,:]))
+            predicted_future_Z.append(cur_ws(x))
         predicted_future_Z = torch.stack(predicted_future_Z, dim=1)
         return predicted_future_Z
 
@@ -125,20 +125,20 @@ class CPC(nn.Module):
         #print("after encoder done "+str(x.shape))
         z=torch.clone(x)
         x=self.ar(x) #==>[Batch,length,Channel/feature]
-        #print("after ar done "+str(x.shape))
         output=[]
-        z=z.transpose(1,2)#===>[Batch,Channel/feature,length]
+        z=z.transpose(1,2)#===>[Batch,length,Channel/feature]
         total_loss=0
-        for i in range(0,x.shape[1]-self.no_of_projects,self.no_of_projects):
-            cur_x=x[:,i:(i+self.no_of_projects),:]
-            cur_z=z[:,i:(i+self.no_of_projects),:]
+        for t in range(0,x.shape[1]-self.no_of_projects):
+            cur_x=x[:,t,:]
+            cur_z=z[:,t+1:(t+self.no_of_projects+1),:]
+            #print("z per batch ..."+str(cur_z.shape))
             cur_x=self.projection(cur_x)
             output.append(cur_x)
             loss=self.infoNCELoss(cur_z.transpose(0,1),cur_x.transpose(0,1))
             total_loss=total_loss+loss
         
          #   print("size of cur_x "+str(cur_x.shape)+" :: size of cur_z "+str(cur_z.shape))
-        print("loss ...."+str(total_loss))
+        #print("loss ...."+str(total_loss))
             # calculate the INFO-NCE by comparing the z and x 
 
         return loss,z

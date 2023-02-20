@@ -72,7 +72,7 @@ class RawDownStreamDataset(data.Dataset):
         utt_id = self.utts[index] # get the utterance id
         
         y=utt_id.split("_")[-1] 
-        print(utt_id+"-----"+str(y))
+        #print(utt_id+"-----"+str(y))
         utt_len = self.h5f[utt_id].shape[0] # get the number of data points in the utterance
         index = np.random.randint(utt_len - self.audio_window + 1) # get the index to read part of the utterance into memory 
         str_int=lambda x:int(x)-1
