@@ -43,7 +43,7 @@ def validation_down_stream(args, us_model,ds_model, data_loader, batch_size):
     with torch.no_grad():
         for idx,(data,y) in enumerate(data_loader):
             data = data.float().to(device) # add channel dimension
-            y=y.to(dtype=torch.long) 
+            y=y.to(dtype=torch.long,device=device) 
             
             loss,embeddings= us_model(data)
             predicted_y=ds_model(embeddings)
@@ -57,3 +57,23 @@ def validation_down_stream(args, us_model,ds_model, data_loader, batch_size):
                 total_loss, total_acc))
 
     return total_acc, total_loss
+
+
+def test_down_stream(args, us_model,ds_model, data_loader, batch_size):
+    device=args["device"]
+    logger.info("Starting testing")
+    us_model.eval()
+    ds_model.eval()
+    total_loss = 0
+    total_acc  = 0 
+    predicted_output=[]
+    target_output=[]    
+    with torch.no_grad():
+        for idx,(data,y) in enumerate(data_loader):
+            data = data.float().to(device) # add channel dimension
+            target_output.extend(y.cpu().detach().numpy().tolist())
+            loss,embeddings= us_model(data)
+            predicted_y=ds_model(embeddings)
+            predicted_y=torch.argmax(predicted_y,1)
+            predicted_output.extend(predicted_y.cpu().detach().numpy().tolist())
+    return predicted_output,target_output

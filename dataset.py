@@ -71,53 +71,42 @@ class RawDownStreamDataset(data.Dataset):
     def __getitem__(self, index):
         utt_id = self.utts[index] # get the utterance id
         
-        y=utt_id.split("_")[-1] 
+        y=utt_id.split("_")[-1]
         #print(utt_id+"-----"+str(y))
         utt_len = self.h5f[utt_id].shape[0] # get the number of data points in the utterance
         index = np.random.randint(utt_len - self.audio_window + 1) # get the index to read part of the utterance into memory 
-        str_int=lambda x:int(x)-1
-        apply_fun=np.vectorize(str_int)
-        y=apply_fun(y)
-       
-        return self.h5f[utt_id][index:index+self.audio_window],y
+        y2int=lambda x:int(x)-1
+        return self.h5f[utt_id][index:index+self.audio_window],y2int(y)
 
 def get_dataloaders(conf):
-    if conf.training_mode=="up_stream":
+    if conf.mode=="up_stream":
         training_set   = RawDataset(conf.dev_outputfile_name, conf.dev_outputlist_name, conf.audio_window)
         no_training_data=int(len(training_set)*conf.train_split)
         no_val_data=int(len(training_set)-no_training_data)
 
         test_set   = RawDataset(conf.test_outputfile_name, conf.test_outputlist_name, conf.audio_window)
         training_set, validation_set = torch.utils.data.random_split(training_set, [no_training_data, no_val_data])
-        print("training and validation split")
-        print(len(training_set))
-        print(len(validation_set))
-
-        ##temp block should be removed
-      #  no_training_data=int(len(training_set)*conf.train_split)
-      #  no_val_data=int(len(training_set)-no_training_data)
-      #  training_set, validation_set = torch.utils.data.random_split(training_set, [no_training_data, no_val_data])
-   #     no_training_data=int(len(training_set)*conf.train_split)
-   #     no_val_data=int(len(training_set)-no_training_data)
-   #     training_set, validation_set = torch.utils.data.random_split(training_set, [no_training_data, no_val_data])
-     
-        print(len(training_set))
-        print(len(validation_set))
 
         train_loader = data.DataLoader(training_set, batch_size=conf.batch_size, shuffle=True)
-        validation_loader = data.DataLoader(validation_set, batch_size=conf.batch_size, shuffle=False)
-        test_loader = data.DataLoader(test_set, batch_size=conf.batch_size, shuffle=False)
+        validation_loader = data.DataLoader(validation_set, batch_size=conf.batch_size, shuffle=True)
+        test_loader = data.DataLoader(test_set, batch_size=conf.batch_size, shuffle=True)
 
         return train_loader,validation_loader,test_loader
-    elif conf.training_mode=="down_stream":
-        finnish_speech_training_set   = RawDownStreamDataset(conf.finnish_speech_outputfile_name, conf.finnish_speech_outputlist_name, conf.audio_window)
+    elif conf.mode=="down_stream" :
+        finnish_speech_training_set   = RawDownStreamDataset(conf.finnish_speech_outputfile_name,train_finnish_speech_outputlist_name, conf.audio_window)
         no_training_data=int(len(finnish_speech_training_set)*conf.train_split)
         no_val_data=int(len(finnish_speech_training_set)-no_training_data)
+
         finnish_speech_training_set, finnish_speech_validation_set = torch.utils.data.random_split(finnish_speech_training_set, [no_training_data, no_val_data])
+        
         finnish_train_loader = data.DataLoader(finnish_speech_training_set, batch_size=conf.batch_size, shuffle=True)
-        finnish_validation_loader = data.DataLoader(finnish_speech_validation_set, batch_size=conf.batch_size, shuffle=False)
-        return finnish_train_loader,finnish_validation_loader,None
-    
+        finnish_validation_loader = data.DataLoader(finnish_speech_validation_set, batch_size=conf.batch_size, shuffle=True)
+        
+        return finnish_train_loader,finnish_validation_loader, None
+    elif conf.mode=="test":
+        finnish_speech_test_set   = RawDownStreamDataset(conf.finnish_speech_outputfile_name, conf.test_finnish_speech_outputlist_name, conf.audio_window)
+        finnish_speech_test_loader=data.DataLoader(finnish_speech_test_set, batch_size=conf.batch_size, shuffle=True)
+        return None,None,finnish_speech_test_loader
     
 
 

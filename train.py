@@ -29,22 +29,16 @@ def train_down_stream(args,us_model, ds_model, train_loader, optimizer, epoch, b
     us_model.eval()
     for batch_idx, (data,y) in enumerate(train_loader):
         y=torch.Tensor(y)
-        print(y.shape)
-        y=y.to(dtype=torch.long) 
+        y=y.to(dtype=torch.long,device=device) 
         data = data.float().to(device) # add channel dimension
         optimizer.zero_grad()
 #        hidden = us_model.init_hidden(len(data), use_gpu=args["use_gpu"])
         #up stream task gets the representation
-        print("upstream stream task started")
+       # print("upstream stream task started")
         loss,embeddings = us_model(data)
         #down stream task gets the representation and processes the classification
-        print("down stream task started")
+        #print("down stream task started")
         predicted_y=ds_model(embeddings)
-        print(type(y))
-        #print(y)
-        print(predicted_y.shape)
-        print("y shape for comparing " +str(y.shape))
-        
         loss=args["down_stream_loss_fn"](predicted_y,y)
 
         loss.backward()
