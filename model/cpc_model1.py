@@ -114,17 +114,17 @@ class InfoNCE_loss_no_classes(Module):
 class CPC(nn.Module):
     def __init__(self,encoder_input_dim=1,encoder_output_dim=512,encoder_no_encoder=8,ar_input_dim=512,ar_output_dim=256,project_no_projection=16,project_input_dim=256,project_output_dim=512):
         super(CPC,self).__init__()
-        self.encoder=Encoder(input_dim=encoder_input_dim,no_encoder=encoder_no_encoder,output_dim=encoder_output_dim)
-        self.ar=AutoRegressor(input_dim=ar_input_dim,output_dim=ar_output_dim)
-        self.projection=Projection(no_of_projections=project_no_projection,input_dim=project_input_dim,output_dim=project_output_dim)
+        self.cpc_encoder=Encoder(input_dim=encoder_input_dim,no_encoder=encoder_no_encoder,output_dim=encoder_output_dim)
+        self.cpc_ar=AutoRegressor(input_dim=ar_input_dim,output_dim=ar_output_dim)
+        self.cpc_projection=Projection(no_of_projections=project_no_projection,input_dim=project_input_dim,output_dim=project_output_dim)
         self.no_of_projects=project_no_projection
         self.infoNCELoss=InfoNCE_loss_no_classes(future_predicted_timesteps=project_no_projection)
     
     def forward(self,x): #==> [Batch,length]
-        x=self.encoder(x) #==>[Batch,Channel/feature,length]
+        x=self.cpc_encoder(x) #==>[Batch,Channel/feature,length]
         #print("after encoder done "+str(x.shape))
         z=torch.clone(x)
-        x=self.ar(x) #==>[Batch,length,Channel/feature]
+        x=self.cpc_ar(x) #==>[Batch,length,Channel/feature]
         output=[]
         z=z.transpose(1,2)#===>[Batch,length,Channel/feature]
         total_loss=0
@@ -132,7 +132,7 @@ class CPC(nn.Module):
             cur_x=x[:,t,:]
             cur_z=z[:,t+1:(t+self.no_of_projects+1),:]
             #print("z per batch ..."+str(cur_z.shape))
-            cur_x=self.projection(cur_x)
+            cur_x=self.cpc_projection(cur_x)
             output.append(cur_x)
             loss=self.infoNCELoss(cur_z.transpose(0,1),cur_x.transpose(0,1))
             total_loss=total_loss+loss

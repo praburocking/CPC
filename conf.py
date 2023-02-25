@@ -6,7 +6,7 @@ batch_size=128
 audio_window=20480
 warmup_steps=20
 logging_dir='./logs'
-epochs=5
+epochs=10
 train_split=0.8
 run_name = "trail_run_" + time.strftime("%Y-%m-%d_%H_%M_%S")
 run_name_us_model = "cdc_" + time.strftime("%Y-%m-%d_%H_%M_%S")
@@ -18,9 +18,9 @@ up_stream --> intermediate task to learn the representation
 down_stream --> actual task to be performed like classification, speaker detection.
 test ---> predicting the output
 '''
-#mode="up_stream"
+mode="up_stream"
 #mode="down_stream" 
-mode="test"
+#mode="test"
 #mode="none"
 dev_outputfile_name='dev-Librispeech.h5'
 dev_outputlist_name='dev-Librispeech.pkl'

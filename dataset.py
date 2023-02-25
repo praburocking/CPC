@@ -79,34 +79,21 @@ class RawDownStreamDataset(data.Dataset):
         return self.h5f[utt_id][index:index+self.audio_window],y2int(y)
 
 def get_dataloaders(conf):
-    if conf.mode=="up_stream":
-        training_set   = RawDataset(conf.dev_outputfile_name, conf.dev_outputlist_name, conf.audio_window)
-        no_training_data=int(len(training_set)*conf.train_split)
-        no_val_data=int(len(training_set)-no_training_data)
 
-        test_set   = RawDataset(conf.test_outputfile_name, conf.test_outputlist_name, conf.audio_window)
-        training_set, validation_set = torch.utils.data.random_split(training_set, [no_training_data, no_val_data])
+    assert conf.dataset is not None, "conf.dataset cannot be None" 
+    
+    dataset=conf.dataset(conf.data_file_path, conf.data_list_path, conf.audio_window)
+    if conf.split_data and conf.train_split is not None:
+        no_training_data=int(len(dataset)*conf.train_split)
+        no_val_data=int(len(dataset)-no_training_data)
+
+        training_set, validation_set = torch.utils.data.random_split(dataset, [no_training_data, no_val_data])
 
         train_loader = data.DataLoader(training_set, batch_size=conf.batch_size, shuffle=True)
         validation_loader = data.DataLoader(validation_set, batch_size=conf.batch_size, shuffle=True)
-        test_loader = data.DataLoader(test_set, batch_size=conf.batch_size, shuffle=True)
 
-        return train_loader,validation_loader,test_loader
-    elif conf.mode=="down_stream" :
-        finnish_speech_training_set   = RawDownStreamDataset(conf.finnish_speech_outputfile_name,train_finnish_speech_outputlist_name, conf.audio_window)
-        no_training_data=int(len(finnish_speech_training_set)*conf.train_split)
-        no_val_data=int(len(finnish_speech_training_set)-no_training_data)
-
-        finnish_speech_training_set, finnish_speech_validation_set = torch.utils.data.random_split(finnish_speech_training_set, [no_training_data, no_val_data])
-        
-        finnish_train_loader = data.DataLoader(finnish_speech_training_set, batch_size=conf.batch_size, shuffle=True)
-        finnish_validation_loader = data.DataLoader(finnish_speech_validation_set, batch_size=conf.batch_size, shuffle=True)
-        
-        return finnish_train_loader,finnish_validation_loader, None
-    elif conf.mode=="test":
-        finnish_speech_test_set   = RawDownStreamDataset(conf.finnish_speech_outputfile_name, conf.test_finnish_speech_outputlist_name, conf.audio_window)
-        finnish_speech_test_loader=data.DataLoader(finnish_speech_test_set, batch_size=conf.batch_size, shuffle=True)
-        return None,None,finnish_speech_test_loader
-    
+        return train_loader,validation_loader
+    else:
+            return data.DataLoader(dataset, batch_size=conf.batch_size, shuffle=True)
 
 
