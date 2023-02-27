@@ -17,8 +17,8 @@ def audio2raw(rootdirs,extension,outputfile_name,outputlist_name):
                 if file.endswith(extension):
                     fullpath = os.path.join(subdir, file)
                     data,fs = sf.read(fullpath)
-                    data=np.array(data)
-                    print(data.dtype)
+                    data=np.array(data, dtype='float32')
+                    #print(data.dtype)
                     if len(data.shape)==2:
                         data=np.array(data[:,0])
                     h5f.create_dataset(file[:-len(extension)], data=data)
@@ -48,10 +48,30 @@ def perform_train_test_split(input_list_path,train_list_path,test_list_path):
 
 dev_outputfile_name='dev-Librispeech.h5'
 dev_outputlist_name='dev-Librispeech.pkl'
-dev_rootdirs=['../data/LibriSpeech/dev-clean/']
+dev_rootdirs=['../data/LibriSpeech/dev-clean/','../data/LibriSpeech/dev-other/']
 #dev_rootdirs=['../data/LibriSpeech/dev-clean/','../data/LibriSpeech/dev-other/','../raw_data/LibriSpeech/train-clean-100/','../raw_data/LibriSpeech/train-clean-360/','../raw_data/LibriSpeech/train-other-500/']
 extension=".flac"
 audio2raw(dev_rootdirs,extension,dev_outputfile_name,dev_outputlist_name)
+
+
+train_100_outputfile_name='train_100-Librispeech.h5'
+train_100_outputlist_name='train_100-Librispeech.pkl'
+train_100_rootdirs=['../raw_data/LibriSpeech/train-clean-100/']
+extension=".flac"
+audio2raw(train_100_rootdirs,extension,train_100_outputfile_name,train_100_outputlist_name)
+
+train_360_outputfile_name='train_360-Librispeech.h5'
+train_360_outputlist_name='train_360-Librispeech.pkl'
+train_360_rootdirs=['../raw_data/LibriSpeech/train-clean-360/']
+extension=".flac"
+audio2raw(train_360_rootdirs,extension,train_360_outputfile_name,train_360_outputlist_name)
+
+
+train_500_outputfile_name='train_500-Librispeech.h5'
+train_500_outputlist_name='train_500-Librispeech.pkl'
+train_500_rootdirs=['../raw_data/LibriSpeech/train-other-500/']
+extension=".flac"
+audio2raw(train_500_rootdirs,extension,train_500_outputfile_name,train_500_outputlist_name)
 
 test_outputfile_name='test-Librispeech.h5'
 test_outputlist_name='test-Librispeech.pkl'
