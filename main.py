@@ -47,19 +47,18 @@ meta_data=[]
 for i in temp_conf_attributes:
     if not(i.startswith('__') and i.endswith('__')):
         meta_data.append([i,str(getattr(conf,i))])
-meta_data_print=tabulate(meta_data, headers=["param_name","param_value"])
-logger.info(meta_data_print)
-writer.add_text('meta_data', meta_data_print)
+logger.info(tabulate(meta_data, headers=["param_name","param_value"]))
+writer.add_text('meta_data', str(tabulate(meta_data, headers=["param_name","param_value"],tablefmt="html")))
 writer.flush()
 
-#initalizing the up stream and down stream model 
+#initalizing the up stream model 
 device = torch.device("cuda" if use_cuda else "cpu")
 us_model=None
 optimizer=None
 if conf.us_model is not None:
-    us_model=conf.us_model().to(device)
-    lr = 1e-4
-    optimizer = torch.optim.Adam(us_model.parameters(), lr=lr)
+    us_model=conf.us_model(project_no_projection=conf.timestep).to(device)
+
+    optimizer = torch.optim.Adam(us_model.parameters(), lr=conf.lr)
     if conf.load_us_model is not None:
          checkpoint = torch.load(conf.load_us_model, map_location=lambda storage, loc: storage)
          us_model.load_state_dict(checkpoint['state_dict'])
@@ -80,8 +79,7 @@ ds_model=None
 # changes with the training mode in down stream
 if conf.ds_model is not None:
     ds_model=conf.ds_model(linear_config=conf.ds_model_config,no_classes=conf.ds_model_no_class)
-    lr = 1e-4
-    optimizer=torch.optim.Adam(ds_model.parameters(), lr=lr)
+    optimizer=torch.optim.Adam(ds_model.parameters(), lr=conf.lr)
     if conf.load_ds_model is not None:
         checkpoint = torch.load(conf.load_ds_model, map_location=lambda storage, loc: storage) # load everything onto CPU
         ds_model.load_state_dict(checkpoint['state_dict'])
@@ -104,7 +102,7 @@ else:
 
 
 
-args={"log_interval":10,"logging_dir":logging_dir,"epochs":epochs,"use_gpu":use_cuda,"device":device,"lr":lr}
+args={"log_interval":conf.log_interval,"logging_dir":logging_dir,"epochs":epochs,"use_gpu":use_cuda,"device":device,"lr":conf.lr}
 
 if conf.train_ds_model and ds_model is not None:
     args["down_stream_loss_fn"]=conf.ds_model_loss_fn
@@ -166,6 +164,8 @@ def process_training(us_model,ds_model,epochs,args,train_loader,validation_loade
 
 if conf.train:
     train_loader,validation_loader=get_dataloaders(conf)
+    writer.add_text('validation_data_size',str(len(validation_loader.dataset)))
+    writer.add_text('train_data_size',str(len(train_loader.dataset)))
     process_training(us_model,ds_model,epochs,args,train_loader,validation_loader,optimizer,batch_size,conf.patience_thresold)
 if conf.test:
     test_loader=get_dataloaders(conf)

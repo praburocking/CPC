@@ -31,13 +31,73 @@ class Encoder(nn.Module):
         x=x.unsqueeze(1) #==>[Batch,channel,length] where channel is 1
         x=self.encoder(x)
         return x   #==> [Batch,channel,length] where channel is 512
+    
+class CPC_encoder_mlp(Module):
+    """
+    A five-layer MLP encoder for 2D inputs (e.g. log-mel features).
+    
+    """
+    
+    def __init__(self,
+                 linear_1_input_dim = 60,
+                 linear_1_output_dim = 512,
+                 num_norm_features_1 = 512,
+                 linear_2_input_dim = 512,
+                 linear_2_output_dim = 512,
+                 num_norm_features_2 = 512,
+                 linear_3_input_dim = 512,
+                 linear_3_output_dim = 512,
+                 num_norm_features_3 = 512,
+                 normalization_type = 'batchnorm',
+                 dropout = 0.2):
+
+        super().__init__()
+        
+        if normalization_type == 'batchnorm':
+            normalization_layer = nn.BatchNorm1d
+        elif normalization_type == None:
+            normalization_layer = nn.Identity
+        else:
+            sys.exit(f'Wrong value for argument "normalization_type": {normalization_type}')
+        
+        self.linear_layer_1 = nn.Linear(in_features=linear_1_input_dim,out_features=linear_1_output_dim)
+        self.normalization_1 = normalization_layer(num_norm_features_1)
+
+        self.linear_layer_2 = nn.Linear(in_features=linear_2_input_dim, out_features=linear_2_output_dim)
+        self.normalization_2 = normalization_layer(num_norm_features_2)
+                              
+        self.linear_layer_3 = nn.Linear(in_features=linear_3_input_dim, out_features=linear_3_output_dim)
+        self.normalization_3 = normalization_layer(num_norm_features_3)
+        
+        self.non_linearity_elu = nn.ELU()
+        self.dropout = nn.Dropout(dropout)
+
+
+    def forward(self, X):
+        
+        # X is now of size [batch_size, num_frames_input, num_features]
+        X_output = []
+        
+        # We go through each timestep and produce an encoding
+        for i in range(X.size()[1]):
+            X_frame = X[:, i, :]
+            X_frame = self.dropout(self.non_linearity_elu(self.normalization_1(self.linear_layer_1(X_frame))))
+            X_frame = self.dropout(self.non_linearity_elu(self.normalization_2(self.linear_layer_2(X_frame))))
+            X_frame = self.dropout(self.non_linearity_elu(self.normalization_3(self.linear_layer_3(X_frame))))
+            X_output.append(X_frame)
+        
+        X_output = torch.stack(X_output, dim=1) #===>shape [batch_size, num_frames_encoding, linear_3_output_dim]
+        #X_output = X_output.permute(0, 2, 1)
+        
+        return X_output
+
 
 class AutoRegressor(nn.Module):
     def __init__(self,input_dim=512,output_dim=256):
         super(AutoRegressor,self).__init__()
         self.gru=nn.GRU(input_size=input_dim, hidden_size=output_dim, num_layers=1, batch_first=True, bidirectional=False)
     def forward(self,x): # ==> [Batch,Channel,Length] where channel is 512
-        x=x.transpose(1,2)#==>[Batch,Length,Channel]
+        
         x,_=self.gru(x) #==> [Batch,Length,Channel]
         return x #==> [Batch,Length,Channel]
 
@@ -114,19 +174,20 @@ class InfoNCE_loss_no_classes(Module):
 class CPC(nn.Module):
     def __init__(self,encoder_input_dim=1,encoder_output_dim=512,encoder_no_encoder=8,ar_input_dim=512,ar_output_dim=256,project_no_projection=16,project_input_dim=256,project_output_dim=512):
         super(CPC,self).__init__()
-        self.cpc_encoder=Encoder(input_dim=encoder_input_dim,no_encoder=encoder_no_encoder,output_dim=encoder_output_dim)
+       # self.cpc_encoder=Encoder(input_dim=encoder_input_dim,no_encoder=encoder_no_encoder,output_dim=encoder_output_dim)
+        self.cpc_encoder=CPC_encoder_mlp()
         self.cpc_ar=AutoRegressor(input_dim=ar_input_dim,output_dim=ar_output_dim)
         self.cpc_projection=Projection(no_of_projections=project_no_projection,input_dim=project_input_dim,output_dim=project_output_dim)
         self.no_of_projects=project_no_projection
         self.infoNCELoss=InfoNCE_loss_no_classes(future_predicted_timesteps=project_no_projection)
     
-    def forward(self,x): #==> [Batch,length]
-        x=self.cpc_encoder(x) #==>[Batch,Channel/feature,length]
+    def forward(self,x): #==> [Batch,Channel,length]
+        x=x.transpose(1,2)#==>[Batch,Length,Channel]
+        x=self.cpc_encoder(x) #==>[Batch,length,Channel/feature]
         #print("after encoder done "+str(x.shape))
         z=torch.clone(x)
         x=self.cpc_ar(x) #==>[Batch,length,Channel/feature]
         output=[]
-        z=z.transpose(1,2)#===>[Batch,length,Channel/feature]
         total_loss=0
         for t in range(0,x.shape[1]-self.no_of_projects):
             cur_x=x[:,t,:]
@@ -134,10 +195,11 @@ class CPC(nn.Module):
             #print("z per batch ..."+str(cur_z.shape))
             cur_x=self.cpc_projection(cur_x)
             output.append(cur_x)
+            #print("size of cur_x "+str(cur_x.shape)+" :: size of cur_z "+str(cur_z.shape))
             loss=self.infoNCELoss(cur_z.transpose(0,1),cur_x.transpose(0,1))
             total_loss=total_loss+loss
         
-         #   print("size of cur_x "+str(cur_x.shape)+" :: size of cur_z "+str(cur_z.shape))
+         
         #print("loss ...."+str(total_loss))
             # calculate the INFO-NCE by comparing the z and x 
 
