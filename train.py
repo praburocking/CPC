@@ -5,21 +5,6 @@ import os
 import torch.nn.functional as F
 logger = logging.getLogger("cdc")
 
-def train1(args, model, train_loader, optimizer, epoch, batch_size):
-    device=args["device"]
-    model.train()
-    for batch_idx, data in enumerate(train_loader):
-        data = data.float().to(device) # add channel dimension
-        optimizer.zero_grad()
-        loss,_ = model(data)
-        acc=0
-        loss.backward()
-        optimizer.step()
-        lr=args["lr"]
-        if batch_idx % args["log_interval"] == 0:
-            logger.info('Train Epoch: {} [{}/{} ({:.0f}%)]\tlr:{:.5f}\tAccuracy: {:.4f}\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), lr, acc, loss.item()))
 
 def train(args,us_model, ds_model, train_loader, optimizer, epoch, batch_size,is_train_us_model,is_train_ds_model):
     device=args["device"]
@@ -27,7 +12,7 @@ def train(args,us_model, ds_model, train_loader, optimizer, epoch, batch_size,is
     if is_train_us_model:
         assert  us_model is not None, "if we need to train us_model, us_model has to be set in conf.py file"
     if is_train_ds_model:
-        assert ds_model is not None and us_model is not None, "if we need to train ds_model, us_model and ds_model has to be set in conf.py file"
+        assert ds_model is not None , "if we need to train ds_model, us_model and ds_model has to be set in conf.py file"
   
 
     if us_model  is not None: 
