@@ -40,7 +40,7 @@ class RawDataset(data.Dataset):
         #speaker = utt_id.split('-')[0]
         #label   = self.spk2idx[speaker]
 
-        return self.h5f[utt_id][:,index:index+self.audio_window]
+        return self.h5f[utt_id][:,index:index+self.audio_window],[]
     
     
 class RawDatasetMultipleFile(data.Dataset):
@@ -88,7 +88,7 @@ class RawDatasetMultipleFile(data.Dataset):
         #speaker = utt_id.split('-')[0]
         #label   = self.spk2idx[speaker]
 
-        return log_mel[:,index:index+self.audio_window]
+        return log_mel[:,index:index+self.audio_window],[]
 
 
 class RawDownStreamDataset(data.Dataset):
