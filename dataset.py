@@ -89,6 +89,49 @@ class RawDatasetMultipleFile(data.Dataset):
         #label   = self.spk2idx[speaker]
 
         return log_mel[:,index:index+self.audio_window],[]
+    
+class RawDatasetMultipleFileV1(data.Dataset):
+    def __init__(self, raw_files,list_files, audio_window):
+        """ raw_file: train-clean-100.h5
+        """
+        self.raw_files  = raw_files 
+        self.audio_window = audio_window 
+        self.valid_log_mel_list = []
+        self.temp_file_lists=[]
+        self.h5files=[]
+        for raw_file in raw_files:
+            
+            h5f = h5py.File(raw_file, 'r')
+            temp=h5f.keys()
+            self.temp_file_lists.extend(temp)
+            for i in temp: # sanity check
+                frame_len = h5f[i].shape[1]
+                if frame_len > audio_window:
+                    self.valid_log_mel_list.append(i)
+            self.h5files.append(h5f)
+
+    def __len__(self):
+        """Denotes the total number of utterances
+        """
+        return len(self.valid_log_mel_list)
+
+    def __getitem__(self, index):
+        id = self.valid_log_mel_list[index] # get the utterance id
+        log_mel=None
+        
+        for h5f in self.h5files:
+            try:
+                log_mel=h5f[id]
+                break  
+            except KeyError:
+                pass
+                       
+        mel_len = log_mel.shape[1] # get the number of data points in the utterance
+        index = np.random.randint(mel_len - self.audio_window + 1) # get the index to read part of the utterance into memory 
+        #speaker = utt_id.split('-')[0]
+        #label   = self.spk2idx[speaker]
+
+        return log_mel[:,index:index+self.audio_window],[]
 
 
 class RawDownStreamDataset(data.Dataset):
@@ -141,11 +184,11 @@ def get_dataloaders(conf):
         training_set, validation_set = torch.utils.data.random_split(dataset, [no_training_data, no_val_data])
         print(training_set)
         
-        train_loader = data.DataLoader(training_set, batch_size=conf.batch_size, shuffle=True)
+        train_loader = data.DataLoader(training_set, batch_size=conf.batch_size, shuffle=True,drop_last=True)
         validation_loader = data.DataLoader(validation_set, batch_size=conf.batch_size, shuffle=True)
 
         return train_loader,validation_loader
     else:
-            return data.DataLoader(dataset, batch_size=conf.batch_size, shuffle=True)
+            return data.DataLoader(dataset, batch_size=conf.batch_size, shuffle=True,drop_last=False)
 
 

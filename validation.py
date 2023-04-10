@@ -46,4 +46,4 @@ def test_down_stream(args, model, data_loader, batch_size):
             loss,predicted_y=model(data)
             predicted_y=torch.argmax(predicted_y,1)
             predicted_output.extend(predicted_y.cpu().detach().numpy().tolist())
-    return predicted_output,target_output
+    return target_output,predicted_output

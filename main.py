@@ -5,6 +5,8 @@ from timeit import default_timer as timer
 from tabulate import tabulate
 import copy
 import onnx
+import sys
+import os
 
 #torch imports
 import torch
@@ -26,10 +28,18 @@ from validation import validation,test_down_stream
 from importlib.machinery import SourceFileLoader
 from utils import calculate_stats
 
+print(sys.argv)
+if len(sys.argv)!=3:
+    print("*** mandatory arguments not found *** ")
+    print("argument 1 ---- name for the run \narugment 2 --- brief description of the run")
+    sys.exit(-1)
+
+
 conf_file="/scratch/kcprmo/cpc/CPC/new_conf.py"
 conf = SourceFileLoader('', conf_file).load_module()
 
-
+conf.run_name=conf.run_name_prefix+sys.argv[1]+conf.time_string
+conf.description=sys.argv[2]
 
 #specification variables
 audio_window=conf.audio_window
@@ -59,7 +69,7 @@ model=None
 optimizer=None
 if conf.model is not None:
     if conf.train_ds_model or conf.validate_ds_model:
-        model=conf.model(conf.ds_model_config,conf.ds_model_no_class)
+        model=conf.model(conf.ds_model_config,conf.ds_model_no_class).to(device)
     else:
         model=conf.model(project_no_projection=conf.timestep).to(device)
 
@@ -103,7 +113,6 @@ def process_training(model,epochs,args,train_loader,validation_loader,optimizer,
     patience_counter=0 
     for epoch in range(1, epochs + 1):
         epoch_timer = timer()
-   
         train(args,model, train_loader, optimizer, epoch, batch_size,conf.train_ds_model)
         val_loss = validation(args, model,validation_loader, batch_size,conf.validate_ds_model)
         writer.add_scalar("loss/train",val_loss , epoch)
@@ -119,6 +128,7 @@ def process_training(model,epochs,args,train_loader,validation_loader,optimizer,
                     'validation_loss': val_loss,
                     'optimizer': optimizer.state_dict(),
                 })
+                writer.add_text('model_stored_on', str(os.path.join(conf.log_path+'models/',run_name + '-model_best.pth')))
         
             best_epoch = epoch + 1
             patience_counter=0
@@ -136,15 +146,17 @@ def process_training(model,epochs,args,train_loader,validation_loader,optimizer,
 
 if conf.train:
     train_loader,validation_loader=get_dataloaders(conf)
+    print("validation size "+str(len(validation_loader.dataset)))
+    print("train size "+str(len(train_loader.dataset)))
     writer.add_text('validation_data_size',str(len(validation_loader.dataset)))
     writer.add_text('train_data_size',str(len(train_loader.dataset)))
     process_training(model,epochs,args,train_loader,validation_loader,optimizer,batch_size,conf.patience_thresold)
 if conf.test:
     test_loader=get_dataloaders(conf)
 
-    predicted,target=test_down_stream(args,model, test_loader, batch_size)
+    target,predicted=test_down_stream(args,model, test_loader, batch_size)
     
-    clasifi_report=calculate_stats(predicted,target)
+    clasifi_report=calculate_stats(target,predicted)
     writer.add_text('classification_report', str(tabulate(clasifi_report, headers='keys', tablefmt='html')))
 
 end_global_timer = timer()
