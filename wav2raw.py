@@ -41,12 +41,12 @@ def audio2raw(rootdirs,extension,outputfile_name,outputlist_name,is_change_to_lo
         pickle.dump(file_names,fp)
     h5f.close()
 
-def perform_train_test_split(input_list_path,train_list_path,test_list_path):
+def perform_train_test_split(input_list_path,train_list_path,test_list_path,seperator="_",position=-1):
         with open(input_list_path, "rb") as fp:   # Unpickling
             file_list = pickle.load(fp)
         file_list = [x.strip() for x in file_list]
 
-        str_int=lambda x:int(x.split("_")[-1])-1
+        str_int=lambda x:int(x.split(seperator)[position])-1
         apply_fun=np.vectorize(str_int)
         class_list=apply_fun(file_list)
         print(str(class_list))
@@ -101,4 +101,12 @@ audio2raw(finnish_speech_rootdirs,finnish_speech_extension,finnish_speech_output
 perform_train_test_split(finnish_speech_outputlist_name,train_finnish_speech_outputlist_name,test_finnish_speech_outputlist_name)
 
 
+english_speech_outputfile_name='english_emotion_speech.h5'
+english_speech_outputlist_name='english_emotion_speech.pkl'
+english_emotion_speech_rootdirs=['/scratch/kcprmo/cpc/raw_data/English_emotion']
+english_speech_extension='.wav'
+train_english_speech_outputlist_name='train_english_emotion_speech.pkl'
+test_english_speech_outputlist_name='test_english_emotion_speech.pkl'
+audio2raw(english_emotion_speech_rootdirs,english_speech_extension,english_speech_outputfile_name,english_speech_outputlist_name)
+perform_train_test_split(english_speech_outputlist_name,train_english_speech_outputlist_name,test_english_speech_outputlist_name,seperator="-",position=2)
 

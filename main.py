@@ -10,6 +10,7 @@ import os
 
 #torch imports
 import torch
+
 import torch.nn as nn
 from torch.utils import data
 import torch.nn.functional as F
@@ -29,18 +30,22 @@ from importlib.machinery import SourceFileLoader
 from utils import calculate_stats
 
 print(sys.argv)
-if len(sys.argv)!=3:
+if len(sys.argv)<3:
     print("*** mandatory arguments not found *** ")
     print("argument 1 ---- name for the run \narugment 2 --- brief description of the run")
     sys.exit(-1)
 
-
 conf_file="/scratch/kcprmo/cpc/CPC/new_conf.py"
+if len(sys.argv)==4:
+    conf_file=sys.argv[3]
 conf = SourceFileLoader('', conf_file).load_module()
 
 conf.run_name=conf.run_name_prefix+sys.argv[1]+conf.time_string
 conf.description=sys.argv[2]
 
+    
+
+torch.manual_seed(conf.manual_seed)
 #specification variables
 audio_window=conf.audio_window
 use_cuda=conf.use_cuda
@@ -51,7 +56,11 @@ epochs=conf.epochs
 train_split=conf.train_split
 run_name = conf.run_name
 logger = setup_logs(logging_dir, run_name)
-writer = SummaryWriter(conf.log_path+'runs/'+conf.run_name) 
+summary_writer_folder="runs/"
+if "trail" in sys.argv[1]:
+    summary_writer_folder="old_runs/"
+    
+writer = SummaryWriter(conf.log_path+summary_writer_folder+conf.run_name) 
 
 print("The run has started with the following configurations")
 temp_conf_attributes=dir(conf)
@@ -150,6 +159,8 @@ if conf.train:
     print("train size "+str(len(train_loader.dataset)))
     writer.add_text('validation_data_size',str(len(validation_loader.dataset)))
     writer.add_text('train_data_size',str(len(train_loader.dataset)))
+    #writer.add_text('total_validation_data_size_in_mins',str(validation_loader.dataset.total_audio_in_mins))
+    #writer.add_text('total_train_data_size_in_mins',str(validation_loader.dataset.total_audio_in_mins))
     process_training(model,epochs,args,train_loader,validation_loader,optimizer,batch_size,conf.patience_thresold)
 if conf.test:
     test_loader=get_dataloaders(conf)

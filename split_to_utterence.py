@@ -17,18 +17,13 @@ from datetime import datetime
 
 
 
-
-
-
-
-
 N_MELS=60
 def audio2raw(base_dir,meta_datas,rootdirs,extension,outputfile_name,outputlist_name):
 
 
     file_names=[]
     class_names=[]
-    chunk_length=15000
+    chunk_length=13700
     total_file_not_found=0
     print(rootdirs)
     for i,rootdir in enumerate(rootdirs):
@@ -80,8 +75,8 @@ def audio2raw(base_dir,meta_datas,rootdirs,extension,outputfile_name,outputlist_
 
                     
 
-finnish_speech_outputfile_name='/scratch/kcprmo/cpc/data/dataset/puhelahjat_15sec/puhelahjat'
-finnish_speech_outputlist_name='/scratch/kcprmo/cpc/data/dataset/puhelahjat_15sec/puhelahjat_meta'
+finnish_speech_outputfile_name='/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat'
+finnish_speech_outputlist_name='/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_meta'
 base_dir="/scratch/kcprmo/cpc/finnish_data/puhelahjat/v1/"
 #finnish_speech_rootdirs=["2020_part_01/audio_annotated","2020_part_02/audio_annotated","2020_part_03/audio_annotated","2020_part_04/audio_annotated","2020_part_05/audio_annotated","2020_part_06/audio_annotated","2020_part_07/audio_annotated","2020_part_08/audio_annotated","2020_part_09/audio_annotated"]
 #meta_datas=["2020_part_01/puhelahjat_2020_part_01_meta.csv","2020_part_02/puhelahjat_2020_part_02_meta.csv","2020_part_03/puhelahjat_2020_part_03_meta.csv","2020_part_04/puhelahjat_2020_part_04_meta.csv","2020_part_05/puhelahjat_2020_part_05_meta.csv","2020_part_06/puhelahjat_2020_part_06_meta.csv","2020_part_07/puhelahjat_2020_part_07_meta.csv","2020_part_08/puhelahjat_2020_part_08_meta.csv","2020_part_09/puhelahjat_2020_part_09_meta.csv"]

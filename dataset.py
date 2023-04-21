@@ -17,6 +17,7 @@ class RawDataset(data.Dataset):
         self.raw_file  = raw_file 
         self.audio_window = audio_window 
         self.utts = []
+        self.total_audio_in_mins=None
 
         with open(list_file, "rb") as fp:   # Unpickling
             temp = pickle.load(fp)
@@ -44,7 +45,7 @@ class RawDataset(data.Dataset):
     
     
 class RawDatasetMultipleFile(data.Dataset):
-    def __init__(self, raw_files, list_files, audio_window):
+    def __init__(self, raw_files, list_files, audio_window, dataset_len=None):
         """ raw_file: train-clean-100.h5
             list_file: list/training.txt
             audio_window: 30
@@ -55,60 +56,47 @@ class RawDatasetMultipleFile(data.Dataset):
         self.valid_log_mel_list = []
         self.temp_file_lists=[]
         self.h5files=[]
-        for list_file,raw_file in zip(list_files,raw_files):
-            with open(list_file, "rb") as fp:   # Unpickling
-                temp=pickle.load(fp)
-            temp = [x.strip() for x in temp]
-            self.temp_file_lists.extend(temp)
-            h5f = h5py.File(raw_file, 'r')
-            for i in temp: # sanity check
-                frame_len = h5f[i].shape[1]
-                if frame_len > audio_window:
-                    self.valid_log_mel_list.append(i)
-            self.h5files.append(h5f)
-
-    def __len__(self):
-        """Denotes the total number of utterances
-        """
-        return len(self.valid_log_mel_list)
-
-    def __getitem__(self, index):
-        id = self.valid_log_mel_list[index] # get the utterance id
-        log_mel=None
-        
-        for h5f in self.h5files:
-            try:
-                log_mel=h5f[id]
-                break  
-            except KeyError:
-                pass
-                       
-        mel_len = log_mel.shape[1] # get the number of data points in the utterance
-        index = np.random.randint(mel_len - self.audio_window + 1) # get the index to read part of the utterance into memory 
-        #speaker = utt_id.split('-')[0]
-        #label   = self.spk2idx[speaker]
-
-        return log_mel[:,index:index+self.audio_window],[]
-    
-class RawDatasetMultipleFileV1(data.Dataset):
-    def __init__(self, raw_files,list_files, audio_window):
-        """ raw_file: train-clean-100.h5
-        """
-        self.raw_files  = raw_files 
-        self.audio_window = audio_window 
-        self.valid_log_mel_list = []
-        self.temp_file_lists=[]
-        self.h5files=[]
-        for raw_file in raw_files:
-            
-            h5f = h5py.File(raw_file, 'r')
-            temp=h5f.keys()
-            self.temp_file_lists.extend(temp)
-            for i in temp: # sanity check
-                frame_len = h5f[i].shape[1]
-                if frame_len > audio_window:
-                    self.valid_log_mel_list.append(i)
-            self.h5files.append(h5f)
+        total_len=0
+        if list_files is not None:
+            for list_file,raw_file in zip(list_files,raw_files):
+                with open(list_file, "rb") as fp:   # Unpickling
+                    temp=pickle.load(fp)
+                temp = [x.strip() for x in temp]
+                self.temp_file_lists.extend(temp)
+                h5f = h5py.File(raw_file, 'r')
+                for i in temp: # sanity check
+                    frame_len = h5f[i].shape[1]
+                    if frame_len > audio_window:
+                        total_len+=frame_len
+                        self.valid_log_mel_list.append(i)
+                    if dataset_len is not None and dataset_len <= len(self.valid_log_mel_list):
+                        print("breaking as the dataset_len reached")
+                        break
+                self.h5files.append(h5f)
+                if dataset_len is not None and dataset_len <= len(self.valid_log_mel_list):
+                    print("breaking as the dataset_len reached")
+                    break
+                
+        else:
+            for raw_file in raw_files:
+                h5f = h5py.File(raw_file, 'r')
+                temp=h5f.keys()
+                self.temp_file_lists.extend(temp)
+                for i in temp: # sanity check
+                    frame_len = h5f[i].shape[1]
+                    if frame_len > audio_window:
+                        total_len+=frame_len
+                        self.valid_log_mel_list.append(i)
+                    if dataset_len is not None and dataset_len <= len(self.valid_log_mel_list):
+                        print("breaking as the dataset_len reached")
+                        break
+                self.h5files.append(h5f)
+                if dataset_len is not None and dataset_len <= len(self.valid_log_mel_list):
+                    print("breaking as the dataset_len reached")
+                    break
+        self.total_audio_in_mins=total_len/(100*60)
+        print("the total size of the audio in mins is --- "+str(self.total_audio_in_mins))
+        print("dataset_len ----- "+str(dataset_len))
 
     def __len__(self):
         """Denotes the total number of utterances
@@ -135,7 +123,7 @@ class RawDatasetMultipleFileV1(data.Dataset):
 
 
 class RawDownStreamDataset(data.Dataset):
-    def __init__(self, raw_file, list_file, audio_window):
+    def __init__(self, raw_file, list_file, audio_window,dataset_len=None):
         """ raw_file: train-clean-100.h5
             list_file: list/training.txt
             audio_window: 30
@@ -143,6 +131,8 @@ class RawDownStreamDataset(data.Dataset):
         self.raw_file  = raw_file 
         self.audio_window = audio_window 
         self.utts = []
+        self.total_audio_in_mins=None
+        total_len=0
 
         with open(list_file, "rb") as fp:   # Unpickling
             temp = pickle.load(fp)
@@ -152,7 +142,12 @@ class RawDownStreamDataset(data.Dataset):
         for i in temp: # sanity check
             utt_len = self.h5f[i].shape[1]
             if utt_len > self.audio_window:
+                total_len+=utt_len
                 self.utts.append(i)
+        self.total_audio_in_mins=total_len/(100*60)
+        print("the total size of the audio in mins is --- "+str(self.total_audio_in_mins))
+        print("dataset_len ----- "+str(dataset_len))
+                
 
     def __len__(self):
         """Denotes the total number of utterances
@@ -173,7 +168,7 @@ def get_dataloaders(conf):
 
     assert conf.dataset is not None, "conf.dataset cannot be None" 
     
-    dataset=conf.dataset(conf.data_file_path, conf.data_list_path, conf.audio_window)
+    dataset=conf.dataset(conf.data_file_path, conf.data_list_path, conf.audio_window,dataset_len=conf.dataset_len)
     print(conf.data_file_path)
     print(conf.data_list_path)
     print("len of dataset "+str(len(dataset)))
