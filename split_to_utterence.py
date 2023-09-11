@@ -19,8 +19,10 @@ from datetime import datetime
 dialect_classes=['Pirkanmaa', 'Pohjois-Pohjanmaa', 'Pohjois-Savo',
 'Varsinais-Suomi', 'Keski-Suomi', 'Häme', 'Satakunta','Pohjois-Karjala']
 
+
+
 N_MELS=60
-def audio2raw(base_dir,meta_datas,rootdirs,extension,outputfile_name,outputlist_name,is_split_on_silence=True):
+def audio2raw(base_dir,meta_datas,rootdirs,extension,outputfile_name,outputlist_name,is_split_on_silence=False):
 
 
     file_names=[]

@@ -20,7 +20,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 #local imports
 from dataset import get_dataloaders
-from model.cdc_model import CDCK2
+
 from model.cpc_model1 import CPC
 from scheduledoptimizer import ScheduledOptim
 from logger import setup_logs

@@ -10,7 +10,7 @@ up_stream --> intermediate task to learn the representation
 down_stream --> actual task to be performed like classification, speaker detection.
 test ---> predicting the output
 '''
-experiment=None
+experiment="temp_trail"
 manual_seed=5
 modes=["up_stream","down_stream_fine_tune","down_stream_train","test"]
 mode_ISO=['us-tr','ds-ft','ds-tr','ds-ts']
