@@ -49,7 +49,8 @@ it is a sample training configuration file, Which is divided into modes. The cur
 
 5. run the model:
 
-  ```python3 main.py <experiment_name> <experiment_description> ```
+  ```python3 main.py <experiment_name> <experiment_description> ``` 
+  Make sure the experiment variable is not set to None in the configuration file, if it is set to None then the program with ask you use one from the list of experiments.
 
 ## Datasets
 
