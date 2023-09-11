@@ -44,9 +44,9 @@ import torch.nn as nn
 from .cpc_model1 import CPC_encoder_mlp,AutoRegressor
 
 
-class EmotionClassifier_cnn(nn.Module):
+class DownStreamClassifier_cnn(nn.Module):
     def __init__(self,linear_config,no_classes,encoder_input_dim=1,encoder_output_dim=512,encoder_no_encoder=8,ar_input_dim=512,ar_output_dim=256,project_no_projection=16,project_input_dim=256,project_output_dim=512):
-        super(EmotionClassifier_cnn,self).__init__()
+        super(DownStreamClassifier_cnn,self).__init__()
         # self.cpc_encoder=Encoder(input_dim=encoder_input_dim,no_encoder=encoder_no_encoder,output_dim=encoder_output_dim)
         self.cpc_encoder=CPC_encoder_mlp()
         #self.cpc_ar=AutoRegressor(input_dim=ar_input_dim,output_dim=ar_output_dim)
@@ -78,9 +78,9 @@ class EmotionClassifier_cnn(nn.Module):
    
         return None,x
 
-class EmotionClassifier_gru(nn.Module):
+class DownStreamClassifier_gru(nn.Module):
     def __init__(self,linear_config,no_classes,encoder_input_dim=1,encoder_output_dim=512,encoder_no_encoder=8,ar_input_dim=512,ar_output_dim=256,project_no_projection=16,project_input_dim=256,project_output_dim=512):
-        super(EmotionClassifier_gru,self).__init__()
+        super(DownStreamClassifier_gru,self).__init__()
         # self.cpc_encoder=Encoder(input_dim=encoder_input_dim,no_encoder=encoder_no_encoder,output_dim=encoder_output_dim)
         self.cpc_encoder=CPC_encoder_mlp()
         self.cpc_ar=AutoRegressor(input_dim=ar_input_dim,output_dim=ar_output_dim)

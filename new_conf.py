@@ -1,8 +1,8 @@
 import time
 import torch.nn as nn
 from model.cpc_model1 import CPC
-from model.classification_model import EmotionClassifier_cnn,EmotionClassifier_relu,EmotionClassifier_gru
-from dataset import RawDataset,RawDownStreamDataset,RawDatasetMultipleFile
+from model.classification_model import DownStreamClassifier_cnn,DownStreamClassifier_gru
+from dataset import RawDownStreamDataset,RawDatasetMultipleFile
 
 
 '''
@@ -10,6 +10,7 @@ up_stream --> intermediate task to learn the representation
 down_stream --> actual task to be performed like classification, speaker detection.
 test ---> predicting the output
 '''
+experiment=None
 manual_seed=5
 modes=["up_stream","down_stream_fine_tune","down_stream_train","test"]
 mode_ISO=['us-tr','ds-ft','ds-tr','ds-ts']
@@ -30,8 +31,9 @@ epochs=15
 train_split=0.8
 log_interval=5
 lr = 1e-3
-patience_thresold=5
-
+patience_thresold=15
+split_char="_"
+split_position=-1
 
 emotion_classifier_linear_config=None
 ds_model_no_class=None
@@ -48,7 +50,8 @@ test=False
 split_data=True
 run_name_prefix=None
 run_name=None
-
+training_history=None
+target_names=['neutral', 'sadness', 'joy','anger','tenderness']
 """
 for puhelahjat data set the validation should be 4 percent extra to manage the 10k extra records.
 """
@@ -60,21 +63,22 @@ if mode==modes[0]:
     named_parameters_to_ignore=[]
     train_split=0.80 #only for puhelahjat
     data_list_path=None
-    data_file_path=['/scratch/kcprmo/cpc/data/dataset/puhelahjat_14sec/puhelahjat_1.h5',
-                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_14sec/puhelahjat_2.h5',
-                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_14sec/puhelahjat_3.h5',
-                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_14sec/puhelahjat_4.h5',
-                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_14sec/puhelahjat_5.h5',
-                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_14sec/puhelahjat_6.h5',
-                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_14sec/puhelahjat_7.h5',
-                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_14sec/puhelahjat_8.h5',
-                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_14sec/puhelahjat_9.h5',
-                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_14sec/puhelahjat_10.h5',
-                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_14sec/puhelahjat_11.h5',
-                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_14sec/puhelahjat_12.h5',
-                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_14sec/puhelahjat_13.h5']
-    data_list_path=['../data/dataset/dev-Librispeech.pkl','../data/dataset/train_100-Librispeech.pkl','../data/dataset/train_360-Librispeech.pkl','../data/dataset/train_500-Librispeech.pkl']
-    data_file_path=['../data/dataset/dev-Librispeech.h5','../data/dataset/train_100-Librispeech.h5','../data/dataset/train_360-Librispeech.h5','../data/dataset/train_500-Librispeech.h5']
+    data_file_path=['/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_1.h5',
+                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_2.h5',
+                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_3.h5',
+                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_4.h5',
+                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_5.h5',
+                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_6.h5',
+                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_7.h5',
+                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_8.h5',
+                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_9.h5',
+                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_10.h5',
+                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_11.h5',
+                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_12.h5',
+                    '/scratch/kcprmo/cpc/data/dataset/puhelahjat_13.7sec/puhelahjat_13.h5']
+  
+    #data_list_path=['../data/dataset/libri_speech/dev-Librispeech.pkl','../data/dataset/libri_speech/train_100-Librispeech.pkl','../data/dataset/libri_speech/train_360-Librispeech.pkl','../data/dataset/libri_speech/train_500-Librispeech.pkl']
+    #data_file_path=['../data/dataset/libri_speech/dev-Librispeech.h5','../data/dataset/libri_speech/train_100-Librispeech.h5','../data/dataset/libri_speech/train_360-Librispeech.h5','../data/dataset/libri_speech/train_500-Librispeech.h5']
     #data_file_path=['/scratch/kcprmo/cpc/data/dataset/puhelahjat_1.h5',
     #                '/scratch/kcprmo/cpc/data/dataset/puhelahjat_2.h5',]
     #load_model="/scratch/kcprmo/cpc/CPC/experiments/models/test_CPC_puhelahjat_13_02-Apr_01:16:44-model_best.pth"
@@ -82,7 +86,7 @@ if mode==modes[0]:
     save_model=True
     train_ds_model=False
     validate_ds_model=False
-    dataset_len=None
+    dataset_len=258930
     epochs=50
     description='''
                 CPC model pre-training with 960 hrs of librespeeh with learning rate 0.001
@@ -92,14 +96,14 @@ if mode==modes[0]:
 
 
 if mode==modes[1]:
-    #model=EmotionClassifier_cnn #add the ds_model_here
-    model=EmotionClassifier_gru
+    model=DownStreamClassifier_cnn #add the ds_model_here
+    model=DownStreamClassifier_gru
     dataset=RawDownStreamDataset
     run_name_prefix=mode_ISO[mode_index]+"_"+model.__name__+"_"
     named_parameters_to_ignore=['cpc']
     
-    data_list_path="../data/dataset/train_finnish_speech.pkl"
-    data_file_path='../data/dataset/finnish_speech.h5'
+    data_list_path="../data/dataset/FESC/train_finnish_speech.pkl"
+    data_file_path='../data/dataset/FESC/finnish_speech.h5'
     dataset_len=None
     
     ds_model_config=[{"in_dim":512,"out_dim":256},{"in_dim":256,"out_dim":124},{"in_dim":124,"out_dim":64}]
@@ -107,7 +111,7 @@ if mode==modes[1]:
     ds_loss_fn = nn.CrossEntropyLoss()
     
     is_model_load_strict=False
-    load_model='/scratch/kcprmo/cpc/CPC/experiments/models/us-tr_CPC_puhelahjat_58453mins_0.0001lr_16-Apr_10:33:58-model_best.pth'
+    load_model="/scratch/kcprmo/cpc/CPC/experiments/models/us-tr_CPC_trail_librispeech_58329mins_16-Apr_02:57:08-model_best.pth"
     train_ds_model=True
     validate_ds_model=True
     save_model=True
@@ -123,15 +127,15 @@ if mode==modes[1]:
 
 
 if mode==modes[2]:
-    #model=EmotionClassifier_cnn #add the ds_model_here
-    model=EmotionClassifier_gru
+    model=DownStreamClassifier_cnn #add the ds_model_here
+    model=DownStreamClassifier_gru
     dataset=RawDownStreamDataset
     run_name_prefix=mode_ISO[mode_index]+"_"+model.__name__+"_"
     #run_name="em_classify_cnn_on_960hrs+fine_tuned_" + time_string
     named_parameters_to_ignore=[]
     
-    data_list_path="../data/dataset/train_finnish_speech.pkl"
-    data_file_path='../data/dataset/finnish_speech.h5'
+    data_list_path="../data/dataset/FESC/train_finnish_speech.pkl"
+    data_file_path='../data/dataset/FESC/finnish_speech.h5'
     dataset_len=None
 
     ds_model_config=[{"in_dim":512,"out_dim":256},{"in_dim":256,"out_dim":124},{"in_dim":124,"out_dim":64}]
@@ -139,10 +143,7 @@ if mode==modes[2]:
     ds_loss_fn = nn.CrossEntropyLoss()
     
     is_model_load_strict=True
-    load_model='/scratch/kcprmo/cpc/CPC/experiments/models/ds-ft_EmotionClassifier_gru_puhelahjat_58453mins_0.0001lr_19-Apr_00:57:10-model_best.pth'
-    #load_model='/scratch/kcprmo/cpc/CPC/experiments/models/em_classify_cnn_on_960hrs_14-Mar_00:30:12-model_best.pth'
-    #load_model="/scratch/kcprmo/cpc/CPC/experiments/models/ds-ft_EmotionClassifier_cnn_960hr_pt_FESC_14-Mar_21:44:14-model_best.pth"
-    #load_model='/scratch/kcprmo/cpc/CPC/experiments/models/ds-ft_EmotionClassifier_gru_puhelahjat_03-Apr_15:21:25-model_best.pth'
+    load_model="/scratch/kcprmo/cpc/CPC/experiments/models/ds-ft_DownStreamClassifier_gru_CPC_librispeech_56705mins_0.001lr_128AW_14-May_00:37:55-model_best.pth"
     train_ds_model=True
     validate_ds_model=True
     save_model=True
@@ -157,17 +158,14 @@ if mode==modes[2]:
             ''' 
 
 if mode==modes[3]:
-    #model=EmotionClassifier_cnn #add the ds_model_here
-    model=EmotionClassifier_gru #add the ds_model_here
+    model=DownStreamClassifier_cnn #add the ds_model_here
+    model=DownStreamClassifier_gru #add the ds_model_here
     run_name_prefix=mode_ISO[mode_index]+"_"+model.__name__+"_"
     #run_name="test_" + time_string
     dataset=RawDownStreamDataset
-    load_model='/scratch/kcprmo/cpc/CPC/experiments/models/ds-tr_EmotionClassifier_gru_puhelahjat_58453mins_0.0001lr_19-Apr_01:04:47-model_best.pth'#original
-    #load_model='/scratch/kcprmo/cpc/CPC/experiments/models/em_classify_cnn_on_960hrs+fine_tuned_14-Mar_00:15:28-model_best.pth'#base_line
-    #load_model='/scratch/kcprmo/cpc/CPC/experiments/models/ds-tr_EmotionClassifier_gru_baseline_15-Mar_22:32:11-model_best.pth'#cpc_encoder+gru
-    #load_model="/scratch/kcprmo/cpc/CPC/experiments/models/ds-tr_EmotionClassifier_cnn_libri-speech_58329mins_18-Apr_22:42:44-model_best.pth"
-    data_list_path="../data/dataset/test_finnish_speech.pkl"
-    data_file_path='../data/dataset/finnish_speech.h5'
+    load_model='/scratch/kcprmo/cpc/CPC/experiments/models/ds-tr_DownStreamClassifier_gru_CPC_librispeech_56705mins_0.001lr_128AW_14-May_01:25:43-model_best.pth'#original
+    data_list_path="../data/dataset/FESC/test_finnish_speech.pkl"
+    data_file_path='../data/dataset/FESC/finnish_speech.h5'
     dataset_len=None
     ds_model_config=[{"in_dim":512,"out_dim":256},{"in_dim":256,"out_dim":124},{"in_dim":124,"out_dim":64}]
     ds_model_no_class=5

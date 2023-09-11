@@ -10,19 +10,19 @@ class Encoder(nn.Module):
         super(Encoder,self).__init__()
         self.encoder = nn.Sequential( # downsampling factor = 160
             nn.Conv1d(input_dim, output_dim, kernel_size=10, stride=5, padding=3, bias=False),
-            nn.BatchNorm1d(output_dim),
+            nn.BatchNorm1d(output_dim,track_running_stats=True),
             nn.ReLU(inplace=True),
             nn.Conv1d(output_dim, output_dim, kernel_size=8, stride=4, padding=2, bias=False),
-            nn.BatchNorm1d(output_dim),
+            nn.BatchNorm1d(output_dim,track_running_stats=True),
             nn.ReLU(inplace=True),
             nn.Conv1d(output_dim, output_dim, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm1d(output_dim),
+            nn.BatchNorm1d(output_dim,track_running_stats=True),
             nn.ReLU(inplace=True),
             nn.Conv1d(output_dim, output_dim, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm1d(output_dim),
+            nn.BatchNorm1d(output_dim,track_running_stats=True),
             nn.ReLU(inplace=True),
             nn.Conv1d(output_dim, output_dim, kernel_size=4, stride=2, padding=1, bias=False),
-            nn.BatchNorm1d(output_dim),
+            nn.BatchNorm1d(output_dim,track_running_stats=True),
             nn.ReLU(inplace=True)
         )
     
@@ -61,13 +61,13 @@ class CPC_encoder_mlp(Module):
             sys.exit(f'Wrong value for argument "normalization_type": {normalization_type}')
         
         self.linear_layer_1 = nn.Linear(in_features=linear_1_input_dim,out_features=linear_1_output_dim)
-        self.normalization_1 = normalization_layer(num_norm_features_1)
+        self.normalization_1 = normalization_layer(num_norm_features_1,track_running_stats=True)
 
         self.linear_layer_2 = nn.Linear(in_features=linear_2_input_dim, out_features=linear_2_output_dim)
-        self.normalization_2 = normalization_layer(num_norm_features_2)
+        self.normalization_2 = normalization_layer(num_norm_features_2,track_running_stats=True)
                               
         self.linear_layer_3 = nn.Linear(in_features=linear_3_input_dim, out_features=linear_3_output_dim)
-        self.normalization_3 = normalization_layer(num_norm_features_3)
+        self.normalization_3 = normalization_layer(num_norm_features_3,track_running_stats=True)
         
         self.non_linearity_elu = nn.ELU()
         self.dropout = nn.Dropout(dropout)

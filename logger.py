@@ -4,7 +4,7 @@ import os
 def setup_logs(save_dir, run_name):
     # initialize logger
     logger = logging.getLogger("cdc")
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     # create the logging file handler
     if not os.path.isdir(save_dir):
